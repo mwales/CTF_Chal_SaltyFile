@@ -135,10 +135,13 @@ void encryptMode(std::string inputPt, std::string outputCt)
 		unsigned long long ctLen = 0;
 		crypto_aead_aes256gcm_encrypt(ctBuf, &ctLen,
 		                              ptBuf, br,
-		                              (unsigned char*) &br, sizeof(uint32_t),
+		                              NULL, 0,
 		                              NULL, nonce, key);
 
 		std::cout << "Ciphertext length = " << ctLen << std::endl;
+
+		write(fdOut, &br, sizeof(uint32_t));
+		write(fdOut, &ctLen, sizeof(unsigned long long));
 
 		unsigned long long bw = write(fdOut, ctBuf, ctLen);
 		if (bw != ctLen)
@@ -163,7 +166,129 @@ void encryptMode(std::string inputPt, std::string outputCt)
 void decryptMode(std::string inputCt, std::string outputPt)
 {
 	std::cerr << "Decryption mode, ciphertext = " << inputCt << " to " << outputPt << std::endl;
+
+	unsigned char pwsalt[crypto_pwhash_SALTBYTES];
+	unsigned char key[KEY_LEN];
+	randombytes_buf(pwsalt, sizeof pwsalt);
+
+	int fdIn = open(inputCt.c_str(), O_RDONLY);
+	int fdOut = open(outputPt.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+	if ( (fdIn <= 0) || (fdOut <= 0) )
+	{
+		std::cerr << "Error opening one of the files" << std::endl;
+		return;
+	}
+
+	std::cout << "Opened ciphertext " << inputCt << " and plaintext file " << outputPt << std::endl;
+
+	int saltRead = read(fdIn, &pwsalt, sizeof pwsalt);
+	if (saltRead != sizeof pwsalt)
+	{
+		std::cerr << "Error reading the salt bytes from the file" << std::endl;
+		close(fdIn);
+		close(fdOut);
+		return;
+	}
+
+	// Derive a key from the password
+	int hashSuccess = crypto_pwhash(key, KEY_LEN,
+	                                PASSWORD, strlen(PASSWORD),
+	                                pwsalt, crypto_pwhash_OPSLIMIT_MODERATE,
+	                                crypto_pwhash_MEMLIMIT_MODERATE,
+	                                crypto_pwhash_ALG_DEFAULT);
+
+	if (hashSuccess)
+	{
+		std::cerr << "Error converting password to key" << std::endl;
+		close(fdIn);
+		close(fdOut);
+		return;
+	}
+
+	// Create a nonce
+	unsigned char nonce[crypto_aead_aes256gcm_NPUBBYTES];
+	int nonceRead = read(fdIn, &nonce, sizeof nonce);
+	if (nonceRead != sizeof nonce)
+	{
+		std::cerr << "Error reading the nonce from the ct file" << std::endl;
+		close(fdIn);
+		close(fdOut);
+		return;
+	}
+
+	crypto_aead_aes256gcm_keygen(key);
+
+	unsigned int const BUF_LEN = 2048;
+	unsigned char ptBuf[BUF_LEN];
+	unsigned char ctBuf[BUF_LEN + crypto_aead_aes256gcm_ABYTES];
+
+	uint32_t totalPtLen = 0;
+	while(1)
+	{
+		
+		uint32_t chunkPtSize = -1;
+		unsigned long long chunkCtSize = 0;
+
+		int cps = read(fdIn, &chunkPtSize, sizeof(uint32_t));
+		int ccs = read(fdIn, &chunkCtSize, sizeof(unsigned long long));
+
+		std::cerr << "  totalPtLen=" << totalPtLen << ", ptLen=" << chunkPtSize << ", ctLen=" << chunkCtSize << std::endl;
+
+		if ( (cps != sizeof(uint32_t)) || (ccs != sizeof(unsigned long long)) )
+		{
+			std::cout << "We must have reached the end of the cipher text" << std::endl;
+			std::cout << "  cps=" << cps << ", and ccs=" << ccs << std::endl;
+			break;
+		}
+
+		uint32_t br = read(fdIn, ctBuf, chunkCtSize);
+		if (br != chunkCtSize)
+		{
+			std::cerr << "Error reading chunk of size " << chunkCtSize << " at " << totalPtLen << std::endl;
+			close(fdIn);
+			close(fdOut);
+			return;
+		}
+
+		std::cout << "Read in a chunk of size " << br << std::endl;
+		
+		unsigned long long ptLen = 0;
+		int decryptSuccess = crypto_aead_aes256gcm_decrypt(ptBuf, &ptLen,
+		                                                   NULL,
+		                                                   ctBuf, chunkCtSize,
+		                                                   NULL, 0,
+		                                                   nonce, key);
+
+		std::cout << "Plaintext length = " << ptLen << std::endl;
+		
+		if (decryptSuccess == -1)
+		{
+			std::cerr << "Decryption call failed.  MAC?" << std::endl;
+			close(fdIn);
+			close(fdOut);
+			return;
+		}
+
+		unsigned long long bw = write(fdOut, ptBuf, ptLen);
+		if (bw != ptLen)
+		{
+			std::cerr << "Error writing the plaintext of size " << ptLen << " at " << totalPtLen << std::endl;
+			close(fdIn);
+			close(fdOut);
+			return;
+		}
+
+		totalPtLen += ptLen;
+		incrementNonce( (unsigned char*) &nonce, crypto_aead_aes256gcm_NPUBBYTES);
+	}
+
+	std::cout << "Decryption complete. " << totalPtLen << " decrypted bytes" << std::endl;
+
+	close(fdIn);
+	close(fdOut);
 }
+
+
 
 int main(int argc, char** argv)
 {
