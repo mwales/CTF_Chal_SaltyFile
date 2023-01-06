@@ -10,7 +10,7 @@
 
 #include <sodium.h>
 
-
+#include "hexdump.h"
 
 #define PASSWORD "wildcat{git_history_is_forever}"
 #define KEY_LEN crypto_aead_aes256gcm_KEYBYTES
@@ -55,6 +55,10 @@ void encryptMode(std::string inputPt, std::string outputCt)
 	unsigned char key[KEY_LEN];
 	randombytes_buf(pwsalt, sizeof pwsalt);
 
+	std::cout << "Password Salt:" << std::endl;
+	hexDump(pwsalt, sizeof pwsalt);
+	std::cout << std::endl;
+
 	int fdIn = open(inputPt.c_str(), O_RDONLY);
 	int fdOut = open(outputCt.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
 	if ( (fdIn <= 0) || (fdOut <= 0) )
@@ -89,6 +93,10 @@ void encryptMode(std::string inputPt, std::string outputCt)
 		return;
 	}
 
+	std::cout << "Key:" << std::endl;
+	hexDump(key, sizeof key);
+	std::cout << std::endl;
+
 	// Create a nonce
 	unsigned char nonce[crypto_aead_aes256gcm_NPUBBYTES];
 	randombytes_buf(nonce, sizeof nonce);
@@ -101,7 +109,16 @@ void encryptMode(std::string inputPt, std::string outputCt)
 		return;
 	}
 
+	std::cout << "Nonce:" << std::endl;
+	hexDump(nonce, sizeof nonce);
+	std::cout << std::endl;
+
 	crypto_aead_aes256gcm_keygen(key);
+
+	std::cout << "Key:" << std::endl;
+	hexDump(key, sizeof key);
+	std::cout << std::endl;
+
 
 	unsigned int const BUF_LEN = 2048;
 	unsigned char ptBuf[BUF_LEN];
@@ -140,6 +157,10 @@ void encryptMode(std::string inputPt, std::string outputCt)
 
 		std::cout << "Ciphertext length = " << ctLen << std::endl;
 
+		std::cout << "Ciphertext:" << std::endl;
+		hexDump(ctBuf, ctLen);
+		std::cout << std::endl;
+
 		write(fdOut, &br, sizeof(uint32_t));
 		write(fdOut, &ctLen, sizeof(unsigned long long));
 
@@ -169,7 +190,6 @@ void decryptMode(std::string inputCt, std::string outputPt)
 
 	unsigned char pwsalt[crypto_pwhash_SALTBYTES];
 	unsigned char key[KEY_LEN];
-	randombytes_buf(pwsalt, sizeof pwsalt);
 
 	int fdIn = open(inputCt.c_str(), O_RDONLY);
 	int fdOut = open(outputPt.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
@@ -190,6 +210,10 @@ void decryptMode(std::string inputCt, std::string outputPt)
 		return;
 	}
 
+	std::cout << "Password Salt:" << std::endl;
+	hexDump(pwsalt, sizeof(pwsalt));
+	std::cout << std::endl;
+
 	// Derive a key from the password
 	int hashSuccess = crypto_pwhash(key, KEY_LEN,
 	                                PASSWORD, strlen(PASSWORD),
@@ -205,6 +229,10 @@ void decryptMode(std::string inputCt, std::string outputPt)
 		return;
 	}
 
+	std::cout << "Key:" << std::endl;
+	hexDump(key, KEY_LEN);
+	std::cout << std::endl;
+
 	// Create a nonce
 	unsigned char nonce[crypto_aead_aes256gcm_NPUBBYTES];
 	int nonceRead = read(fdIn, &nonce, sizeof nonce);
@@ -215,6 +243,10 @@ void decryptMode(std::string inputCt, std::string outputPt)
 		close(fdOut);
 		return;
 	}
+
+	std::cout << "Nonce:" << std::endl;
+	hexDump(nonce, sizeof nonce);
+	std::cout << std::endl;
 
 	crypto_aead_aes256gcm_keygen(key);
 
@@ -252,6 +284,10 @@ void decryptMode(std::string inputCt, std::string outputPt)
 
 		std::cout << "Read in a chunk of size " << br << std::endl;
 		
+		std::cout << "Ciphertext:" << std::endl;
+		hexDump(ctBuf, chunkCtSize);
+		std::cout << std::endl;
+
 		unsigned long long ptLen = 0;
 		int decryptSuccess = crypto_aead_aes256gcm_decrypt(ptBuf, &ptLen,
 		                                                   NULL,
