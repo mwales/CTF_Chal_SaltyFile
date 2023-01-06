@@ -113,13 +113,6 @@ void encryptMode(std::string inputPt, std::string outputCt)
 	hexDump(nonce, sizeof nonce);
 	std::cout << std::endl;
 
-	crypto_aead_aes256gcm_keygen(key);
-
-	std::cout << "Key:" << std::endl;
-	hexDump(key, sizeof key);
-	std::cout << std::endl;
-
-
 	unsigned int const BUF_LEN = 2048;
 	unsigned char ptBuf[BUF_LEN];
 	unsigned char ctBuf[BUF_LEN + crypto_aead_aes256gcm_ABYTES];
@@ -248,8 +241,6 @@ void decryptMode(std::string inputCt, std::string outputPt)
 	hexDump(nonce, sizeof nonce);
 	std::cout << std::endl;
 
-	crypto_aead_aes256gcm_keygen(key);
-
 	unsigned int const BUF_LEN = 2048;
 	unsigned char ptBuf[BUF_LEN];
 	unsigned char ctBuf[BUF_LEN + crypto_aead_aes256gcm_ABYTES];
@@ -264,8 +255,6 @@ void decryptMode(std::string inputCt, std::string outputPt)
 		int cps = read(fdIn, &chunkPtSize, sizeof(uint32_t));
 		int ccs = read(fdIn, &chunkCtSize, sizeof(unsigned long long));
 
-		std::cerr << "  totalPtLen=" << totalPtLen << ", ptLen=" << chunkPtSize << ", ctLen=" << chunkCtSize << std::endl;
-
 		if ( (cps != sizeof(uint32_t)) || (ccs != sizeof(unsigned long long)) )
 		{
 			std::cout << "We must have reached the end of the cipher text" << std::endl;
@@ -273,6 +262,8 @@ void decryptMode(std::string inputCt, std::string outputPt)
 			break;
 		}
 
+		std::cerr << "  totalPtLen=" << totalPtLen << ", ptLen=" << chunkPtSize << ", ctLen=" << chunkCtSize << std::endl;
+		
 		uint32_t br = read(fdIn, ctBuf, chunkCtSize);
 		if (br != chunkCtSize)
 		{
