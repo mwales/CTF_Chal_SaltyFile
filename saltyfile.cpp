@@ -332,11 +332,8 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	std::cout << "Enter password:" << std::endl;
-	std::string password;
-	std::cin >> password;
-
-	std::cout << "You entered '" << password << "' as you password" << std::endl;
+	char* password;
+	password = getpass("Enter password:\n");
 
 	std::string mode = argv[1];
 	std::string inFile = argv[2];
@@ -344,11 +341,11 @@ int main(int argc, char** argv)
 
 	if (mode == ENCRYPT_MODE)
 	{
-		encryptMode(inFile, outFile, password.c_str());
+		encryptMode(inFile, outFile, password);
 	}
 	else if (mode == DECRYPT_MODE)
 	{
-		decryptMode(inFile, outFile, password.c_str());
+		decryptMode(inFile, outFile, password);
 	}
 	else
 	{
