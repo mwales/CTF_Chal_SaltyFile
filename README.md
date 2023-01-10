@@ -32,69 +32,64 @@ Usage: ./salty mode filename
 
 An example:
 
+```
+$ ./salty -h
+Libsodium initialized                                                          
+File encrypt and decrypt                                                       
+Usage: ./salty mode filename                                                   
+        ./salty -d ciphertext plaintext                                        
+        ./salty -e plaintext ciphertext
+$
+$  
 $ ./salty -e README.md README.enc
-Libsodium initialized
+Libsodium initialized                                                          
+Enter password:                                                                
+                                                                               
 Encryption mode, plaintext = README.md
-Password Salt:
-a2 d1 95 b0 75 bb 31 0d  4a 13 71 dc a5 81 65 4b  |....u.1.J.q...eK|
-
-Opened plaintext README.md and cipertext file README.enc
-Key:
-4e dd 25 57 be 33 da 27  c2 8a 27 1e 7c 4e ab a2  |N.%W.3.'..'.|N..|
-b3 9d 30 8a 3c 1d 55 c0  0e 76 c9 48 b8 6e 2d ab  |..0.<.U..v.H.n-.|
-
-Nonce:
-8e ed 39 91 af 8d 26 3b  1e e5 76 2e              |..9...&;..v.    |
-
-Plaintext file size is 52
-Read in a chunk of size 52
-Ciphertext length = 68
-Ciphertext:
-da c6 cf 03 32 64 59 bf  69 07 f6 8a 52 41 e7 f6  |....2dY.i...RA..|
-07 60 08 4d 18 82 77 8c  25 d3 16 d9 24 8b 64 86  |.`.M..w.%...$.d.|
-fc 4d 9a 62 61 d8 9e ab  32 c5 d6 21 88 65 3e ee  |.M.ba...2..!.e>.|
-48 7c a6 ab 08 32 dc 6a  cd f3 e8 eb 48 e3 ea de  |H|...2.j....H...|
-5c 3f b7 84                                       |\?..            |
-
-Encryption complete. 52 encrypted into 68 bytes
-$ hexdump -C README.enc 
-00000000  a2 d1 95 b0 75 bb 31 0d  4a 13 71 dc a5 81 65 4b  |....u.1.J.q...eK|
-00000010  8e ed 39 91 af 8d 26 3b  1e e5 76 2e 34 00 00 00  |..9...&;..v.4...|
-00000020  44 00 00 00 00 00 00 00  da c6 cf 03 32 64 59 bf  |D...........2dY.|
-00000030  69 07 f6 8a 52 41 e7 f6  07 60 08 4d 18 82 77 8c  |i...RA...`.M..w.|
-00000040  25 d3 16 d9 24 8b 64 86  fc 4d 9a 62 61 d8 9e ab  |%...$.d..M.ba...|
-00000050  32 c5 d6 21 88 65 3e ee  48 7c a6 ab 08 32 dc 6a  |2..!.e>.H|...2.j|
-00000060  cd f3 e8 eb 48 e3 ea de  5c 3f b7 84              |....H...\?..|
-0000006c
+Opened plaintext README.md and cipertext file README.enc                       
+Plaintext file size is 3290                                                    
+Read in a chunk of size 2048                                                   
+Ciphertext length = 2064                                                       
+Read in a chunk of size 1242                                                   
+Ciphertext length = 1258                                                       
+Encryption complete. 3290 encrypted into 3322 bytes
+$
+$
+$                            
+$ hexdump -C README.enc | head -n 10                                                                              
+00000000  69 3d ec fd 21 21 32 a6  8d 37 6f 80 c3 a1 93 23  |i=..!!2..7o....#| 
+00000010  95 a0 51 f9 f7 51 83 05  9c 4e 42 7c 00 08 00 00  |..Q..Q...NB|....|
+00000020  10 08 00 00 00 00 00 00  64 f7 4c 14 70 7d c0 33  |........d.L.p}.3| 
+00000030  36 da 2d ce db f3 72 26  38 9f 1f ce 20 ae 7c 32  |6.-...r&8... .|2|
+00000040  2d d7 6a f7 87 aa d0 a0  20 51 64 32 9d a8 55 bb  |-.j..... Qd2..U.|
+00000050  a3 c7 9d 48 fc c4 fa 3b  c9 bd a0 2a a1 78 05 7b  |...H...;...*.x.{|
+00000060  9f e4 34 90 15 09 9e 1d  44 c0 4a 34 35 b3 5b 25  |..4.....D.J45.[%|
+00000070  4a bd dd d7 9e 7e 8e d6  c4 78 57 c9 74 a0 74 09  |J....~...xW.t.t.|
+00000080  41 d9 1a 57 00 9b e8 50  63 af 95 33 30 0e 8d b1  |A..W...Pc..30...|
+00000090  2f d6 f4 fb fa 54 4f e1  a0 44 04 67 70 e1 3f 99  |/....TO..D.gp.?.|
+$
+$
+$
 $ ./salty -d README.enc README.verify
-Libsodium initialized
-Decryption mode, ciphertext = README.enc to README.verify
+Libsodium initialized                                                          
+Enter password:                                                                
+                                                                               
+Decryption mode, ciphertext = README.enc to README.verify  
 Opened ciphertext README.enc and plaintext file README.verify
-Password Salt:
-a2 d1 95 b0 75 bb 31 0d  4a 13 71 dc a5 81 65 4b  |....u.1.J.q...eK|
-
-Key:
-4e dd 25 57 be 33 da 27  c2 8a 27 1e 7c 4e ab a2  |N.%W.3.'..'.|N..|
-b3 9d 30 8a 3c 1d 55 c0  0e 76 c9 48 b8 6e 2d ab  |..0.<.U..v.H.n-.|
-
-Nonce:
-8e ed 39 91 af 8d 26 3b  1e e5 76 2e              |..9...&;..v.    |
-
-  totalPtLen=0, ptLen=52, ctLen=68
-  Read in a chunk of size 68
-  Ciphertext:
-  da c6 cf 03 32 64 59 bf  69 07 f6 8a 52 41 e7 f6  |....2dY.i...RA..|
-  07 60 08 4d 18 82 77 8c  25 d3 16 d9 24 8b 64 86  |.`.M..w.%...$.d.|
-  fc 4d 9a 62 61 d8 9e ab  32 c5 d6 21 88 65 3e ee  |.M.ba...2..!.e>.|
-  48 7c a6 ab 08 32 dc 6a  cd f3 e8 eb 48 e3 ea de  |H|...2.j....H...|
-  5c 3f b7 84                                       |\?..            |
-
-  Plaintext length = 52
-  We must have reached the end of the cipher text
-    cps=0, and ccs=0
-Decryption complete. 52 decrypted bytes
+  totalPtLen=0, ptLen=2048, ctLen=2064                                         
+Read in a chunk of size 2064                                                   
+Plaintext length = 2048                                                        
+  totalPtLen=2048, ptLen=1242, ctLen=1258
+Read in a chunk of size 1258                                                   
+Plaintext length = 1242                                                        
+We must have reached the end of the cipher text
+  cps=0, and ccs=0                                                             
+Decryption complete. 3290 decrypted bytes
+$
+$
+$
 $ md5sum README.*
-8679c2a22a3d5cf033646c2782753534  README.enc
-7b9beab5a500a9aa0950b169d01948cd  README.md
-7b9beab5a500a9aa0950b169d01948cd  README.verify
+a931a0ff7bf4cf34adfef1db47975d8c  README.enc
+9160ca5d6830e50d11b0bb5eaa08b1e6  README.md
+9160ca5d6830e50d11b0bb5eaa08b1e6  README.verify
 ```
