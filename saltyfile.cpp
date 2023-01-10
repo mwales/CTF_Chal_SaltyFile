@@ -12,7 +12,6 @@
 
 #include "hexdump.h"
 
-#define PASSWORD "wildcat{git_history_is_forever}"
 #define KEY_LEN crypto_aead_aes256gcm_KEYBYTES
 
 #define DECRYPT_MODE "-d"
@@ -47,7 +46,7 @@ void incrementNonce(unsigned char* value, int sizeOfValueBytes)
 }
 
 
-void encryptMode(std::string inputPt, std::string outputCt)
+void encryptMode(std::string inputPt, std::string outputCt, char const * const password)
 {
 	std::cerr << "Encryption mode, plaintext = " << inputPt << std::endl;
 
@@ -80,7 +79,7 @@ void encryptMode(std::string inputPt, std::string outputCt)
 
 	// Derive a key from the password
 	int hashSuccess = crypto_pwhash(key, KEY_LEN,
-	                                PASSWORD, strlen(PASSWORD),
+	                                password, strlen(password),
 	                                pwsalt, crypto_pwhash_OPSLIMIT_MODERATE,
 	                                crypto_pwhash_MEMLIMIT_MODERATE,
 	                                crypto_pwhash_ALG_DEFAULT);
@@ -177,7 +176,7 @@ void encryptMode(std::string inputPt, std::string outputCt)
 	close(fdOut);
 }
 
-void decryptMode(std::string inputCt, std::string outputPt)
+void decryptMode(std::string inputCt, std::string outputPt, char const * const password)
 {
 	std::cerr << "Decryption mode, ciphertext = " << inputCt << " to " << outputPt << std::endl;
 
@@ -209,7 +208,7 @@ void decryptMode(std::string inputCt, std::string outputPt)
 
 	// Derive a key from the password
 	int hashSuccess = crypto_pwhash(key, KEY_LEN,
-	                                PASSWORD, strlen(PASSWORD),
+	                                password, strlen(password),
 	                                pwsalt, crypto_pwhash_OPSLIMIT_MODERATE,
 	                                crypto_pwhash_MEMLIMIT_MODERATE,
 	                                crypto_pwhash_ALG_DEFAULT);
@@ -333,17 +332,23 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
+	std::cout << "Enter password:" << std::endl;
+	std::string password;
+	std::cin >> password;
+
+	std::cout << "You entered '" << password << "' as you password" << std::endl;
+
 	std::string mode = argv[1];
 	std::string inFile = argv[2];
 	std::string outFile = argv[3];
 
 	if (mode == ENCRYPT_MODE)
 	{
-		encryptMode(inFile, outFile);
+		encryptMode(inFile, outFile, password.c_str());
 	}
 	else if (mode == DECRYPT_MODE)
 	{
-		decryptMode(inFile, outFile);
+		decryptMode(inFile, outFile, password.c_str());
 	}
 	else
 	{
